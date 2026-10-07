@@ -20,8 +20,22 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      # NOTE: ubuntu-latest runners already ship the Android SDK
+      # (ANDROID_HOME + cmdline-tools + platform-34). The old
+      # android-actions/setup-android@v3 step was removed because it
+      # tries to install the obsolete 'tools' package and fails with:
+      # "Failed to find package 'tools'", sdkmanager exit code 1.
+      - name: Verify preinstalled SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          sdkmanager --version
+          sdkmanager --list_installed | head -20
+
+      - name: Install platform + build-tools (idempotent)
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
       - name: Set up Gradle 8.7 (no wrapper needed)
         uses: gradle/actions/setup-gradle@v4
