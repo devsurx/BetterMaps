@@ -1,43 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Minimal set: no FOREGROUND_SERVICE (no foreground service = less RAM). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
+        android:name=".App"
         android:allowBackup="true"
-        android:icon="@android:mipmap/sym_def_app_icon"
-        android:label="Maps Complimentor"
+        android:largeHeap="false"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:logo="@drawable/ic_logo_foreground"
+        android:label="BetterMaps"
         android:theme="@style/Theme.MapsComplimentor"
         android:supportsRtl="true">
 
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- Reads Google Maps navigation notifications: "Turn left...", "Rerouting..." -->
+        <!-- Primary: reads Google Maps nav notifications. System auto-starts it. -->
         <service
             android:name=".NavNotificationListener"
             android:exported="true"
-            android:label="Maps nav listener"
+            android:label="BetterMaps"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
 
-        <!-- Fallback: reads on-screen Maps navigation card text -->
+        <!-- Auto-start when Google Maps opens + fallback nav-card parsing. -->
         <service
             android:name=".MapsAccessibilityService"
             android:exported="true"
-            android:label="Maps complimentor"
+            android:label="BetterMaps"
             android:description="@string/accessibility_description"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
@@ -47,6 +53,18 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+
+        <!-- Re-warm TTS after reboot / update. No UI, negligible memory. -->
+        <receiver
+            android:name=".AutoStartReceiver"
+            android:exported="true"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>

@@ -1,0 +1,30 @@
+<!-- BetterMaps logo — vector approximation of the attached PNG (pin + brand colors).
+     Black background matches your logo. Tiny vs PNG = less RAM/disk.
+     TO USE YOUR EXACT PNG: save it as app/src/main/res/drawable-nodpi/logo.png,
+     then change @drawable/ic_logo_foreground references to @drawable/logo. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- pin body base (blue top) -->
+    <path
+        android:fillColor="@color/pinBlue"
+        android:pathData="M54,18 C38,18 28,29 28,43 C28,52 33,59 38,65 L54,90 L70,65 C75,59 80,52 80,43 C80,29 70,18 54,18 Z" />
+    <!-- left red wedge -->
+    <path
+        android:fillColor="@color/pinRed"
+        android:pathData="M28,43 C28,35 32,27 39,22 L54,43 L38,65 C32,59 28,52 28,43 Z" />
+    <!-- middle yellow wedge -->
+    <path
+        android:fillColor="@color/pinYellow"
+        android:pathData="M38,65 L54,43 L60,50 L46,72 Z" />
+    <!-- right green wedge -->
+    <path
+        android:fillColor="@color/pinGreen"
+        android:pathData="M54,43 L69,22 C76,27 80,35 80,43 C80,52 75,59 70,65 L54,90 L46,72 L60,50 Z" />
+    <!-- pin hole (black to match logo background) -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M54,35m-9,0a9,9 0,1 1,18 0a9,9 0,1 1,-18 0" />
+</vector>

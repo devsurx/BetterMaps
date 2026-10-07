@@ -1,28 +1,41 @@
 package com.mapscomplimentor
 
 import android.util.Log
+import java.util.regex.Pattern
 
 /**
- * Single shared entry point. Both the NotificationListener and the
- * AccessibilityService forward raw Maps text here, it gets
- * de-duplicated + classified, then spoken.
+ * Shared entry point. Both listeners forward Maps text here.
+ * De-dup + anti-spam, zero allocations on hot path.
+ * Auto-warmed when Google Maps comes to foreground (see
+ * MapsAccessibilityService.onMapsForeground).
  */
 object TurnEngine {
 
-    private const val TAG = "TurnEngine"
+    private const val TAG = "BetterMaps"
     private val detector = TurnDetector()
     private var lastRaw: String? = null
     private var lastEventTime = 0L
-
-    // Prevent double-speaking when both listeners see the same instruction
-    private const val DEDUP_WINDOW_MS = 2_500L
-    // Don't spam praise: at least 6s between spoken lines
-    private const val MIN_SPEAK_GAP_MS = 6_000L
     private var lastSpokeTime = 0L
+    private var lastForeground = 0L
+
+    private val SPACES = Pattern.compile("\\s+")
+    private const val DEDUP_WINDOW_MS = 2_500L
+    private const val MIN_SPEAK_GAP_MS = 6_000L
+
+    /** Called when Maps enters foreground: fresh trip after long gap resets state. */
+    fun onMapsForeground() {
+        val now = System.currentTimeMillis()
+        if (now - lastForeground > 10 * 60_000) detector.reset()
+        lastForeground = now
+    }
+
+    fun onMapsText(rawText: String?) {
+        onMapsText("maps", rawText)
+    }
 
     fun onMapsText(source: String, rawText: String?) {
-        if (rawText.isNullOrBlank()) return
-        val text = rawText.trim().replace(Regex("\\s+"), " ")
+        if (rawText == null || rawText.length < 4) return
+        val text = SPACES.matcher(rawText.trim()).replaceAll(" ")
         if (text.length < 4) return
 
         val now = System.currentTimeMillis()
@@ -30,17 +43,17 @@ object TurnEngine {
         lastRaw = text
         lastEventTime = now
 
-        Log.d(TAG, "[$source] $text")
+        if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "[$source] $text")
 
-        when (val event = detector.onInstruction(text)) {
-            is TurnDetector.Event.Correct -> maybeSpeak(now) { FeedbackSpeaker.speakCorrect() }
-            is TurnDetector.Event.Wrong -> maybeSpeak(now, force = true) { FeedbackSpeaker.speakWrong() }
-            is TurnDetector.Event.Arrived -> maybeSpeak(now, force = true) { FeedbackSpeaker.speakArrival() }
+        when (detector.onInstruction(text)) {
+            is TurnDetector.Event.Correct -> maybeSpeak(now, false) { FeedbackSpeaker.speakCorrect() }
+            is TurnDetector.Event.Wrong -> maybeSpeak(now, true) { FeedbackSpeaker.speakWrong() }
+            is TurnDetector.Event.Arrived -> maybeSpeak(now, true) { FeedbackSpeaker.speakArrival() }
             is TurnDetector.Event.None -> Unit
         }
     }
 
-    private fun maybeSpeak(now: Long, force: Boolean = false, speak: () -> Unit) {
+    private inline fun maybeSpeak(now: Long, force: Boolean, speak: () -> Unit) {
         if (!force && now - lastSpokeTime < MIN_SPEAK_GAP_MS) return
         lastSpokeTime = now
         speak()

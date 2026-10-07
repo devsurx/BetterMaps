@@ -2,91 +2,90 @@ package com.mapscomplimentor
 
 import android.content.Context
 import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import java.util.Locale
-import java.util.UUID
-import kotlin.random.Random
 
 /**
- * Plays "nice" / "perfect" / "good" for correct turns
- * and a disappointed line for wrong turns, using TTS
- * (no audio files needed, works offline with most voices).
+ * Low-memory TTS speaker. Single shared engine, app-context only,
+ * lazy init, released on memory pressure. No audio files = no RAM.
+ *
+ * Correct turns: "Good! / Perfect! / Amazing!" etc.
+ * Wrong turns: roast lines ("Stupid bastard." etc.) — toggleable in UI.
  */
 object FeedbackSpeaker {
 
-    private var tts: TextToSpeech? = null
-    private var ready = false
+    @Volatile private var tts: TextToSpeech? = null
+    @Volatile private var ready = false
+    private var utterCount = 0L
 
-    var praiseEnabled: Boolean = true
-    var correctionEnabled: Boolean = true
+    @Volatile var praiseEnabled: Boolean = true
+    @Volatile var correctionEnabled: Boolean = true
 
-    private val praiseLines = listOf(
-        "Nice!",
-        "Perfect!",
-        "Good!",
-        "Great turn!",
-        "Smooth!",
-        "Well done!",
-        "Nailed it!"
+    // Static arrays (not listOf per call) — negligible footprint.
+    private val PRAISE = arrayOf(
+        "Good!", "Perfect!", "Amazing!", "Nice!",
+        "Great turn!", "Smooth!", "Well done!",
+        "Nailed it!", "Excellent!", "Brilliant!"
     )
-
-    private val wrongLines = listOf(
-        "Oops, wrong turn.",
-        "Missed it, rerouting.",
-        "Not that way.",
-        "Wrong turn, let's fix it."
+    private val ROAST = arrayOf(
+        "Stupid bastard.", "Shithead.", "Dumbass.",
+        "You idiot.", "Moron move.", "Wrong turn, dumbass."
     )
-
     private const val ARRIVAL_LINE = "You made it! Great driving!"
 
+    @Synchronized
     fun init(context: Context) {
         if (tts != null) return
-        tts = TextToSpeech(context.applicationContext) { status ->
-            ready = status == TextToSpeech.SUCCESS
-            tts?.let {
-                it.language = Locale.US
-                it.setSpeechRate(1.05f)
+        try {
+            tts = TextToSpeech(context.applicationContext) { status ->
+                ready = status == TextToSpeech.SUCCESS
+                if (ready) {
+                    try {
+                        tts?.language = Locale.US
+                        tts?.setSpeechRate(1.05f)
+                    } catch (_: Exception) {}
+                }
             }
-        }
+        } catch (_: Exception) {}
     }
 
     fun speakCorrect() {
         if (!praiseEnabled) return
-        speak(praiseLines.random(Random(System.currentTimeMillis())))
+        // Time-sliced pick, no Random allocation.
+        val i = ((System.currentTimeMillis() / 1000) % PRAISE.size).toInt()
+        speak(PRAISE[i])
     }
 
     fun speakWrong() {
         if (!correctionEnabled) return
-        speak(wrongLines.random(Random(System.currentTimeMillis() + 999)))
+        val i = ((System.currentTimeMillis() / 1000) % ROAST.size).toInt()
+        speak(ROAST[i])
     }
 
-    fun speakArrival() {
-        speak(ARRIVAL_LINE)
-    }
+    fun speakArrival() = speak(ARRIVAL_LINE)
 
-    /** For the Test buttons in MainActivity */
     fun speakCustom(line: String) = speak(line)
 
+    /** Called from App.onTrimMemory / onLowMemory. */
+    @Synchronized
+    fun releaseOnTrim() {
+        try { tts?.stop() } catch (_: Exception) {}
+        // Keep instance (re-creating TTS is slower + heavier);
+        // just stop speech so the engine can page out.
+    }
+
+    @Synchronized
     fun shutdown() {
-        tts?.shutdown()
+        try { tts?.shutdown() } catch (_: Exception) {}
         tts = null
         ready = false
     }
 
     private fun speak(line: String) {
         val engine = tts ?: return
-        if (!ready) {
-            // Queue for when TTS finishes init: simple retry
-            engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                override fun onStart(id: String?) {}
-                override fun onDone(id: String?) {}
-                @Deprecated("deprecated")
-                override fun onError(id: String?) {}
-            })
-        }
+        if (!ready || line.isEmpty()) return
         try {
-            engine.speak(line, TextToSpeech.QUEUE_ADD, null, UUID.randomUUID().toString())
-        } catch (_: Exception) {
-        }
+            utterCount++
+            engine.speak(line, TextToSpeech.QUEUE_ADD, null, "bm$utterCount")
+        } catch (_: Exception) {}
     }
 }

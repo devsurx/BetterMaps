@@ -1,89 +1,134 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="20dp">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Maps Complimentor"
-        android:textSize="26sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="Plays “Nice! Perfect! Good!” on correct turns and a gentle “oops” on wrong turns — automatically while you navigate."
-        android:textSize="14sp" />
-
-    <TextView
-        android:id="@+id/txtStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:background="#EEEEEE"
-        android:padding="12dp"
-        android:text="Status…"
-        android:textSize="14sp" />
-
-    <com.google.android.material.materialswitch.MaterialSwitch
-        android:id="@+id/switchPraise"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:checked="true"
-        android:text="Praise correct turns (Nice! Perfect! Good!)" />
-
-    <com.google.android.material.materialswitch.MaterialSwitch
-        android:id="@+id/switchCorrection"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:checked="true"
-        android:text="Call out wrong turns (Oops, missed it)" />
-
-    <Button
-        android:id="@+id/btnNotifAccess"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="1. Enable notification access (required)" />
-
-    <Button
-        android:id="@+id/btnAccessibility"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="2. Enable accessibility (fallback, recommended)" />
+    android:background="#000000">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:contentDescription="BetterMaps logo"
+                android:src="@drawable/ic_logo_foreground" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="BetterMaps"
+                    android:textColor="#FFFFFF"
+                    android:textSize="26sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Maps Complimentor"
+                    android:textColor="#AAAAAA"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Correct turn? “Good! Perfect! Amazing!”  Wrong turn? Roast mode on. Auto-starts when you open Google Maps."
+            android:textColor="#DDDDDD"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/txtStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="#1A1A1A"
+            android:padding="12dp"
+            android:text="Status…"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchPraise"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:checked="true"
+            android:text="Praise correct turns (Good! Perfect! Amazing!)"
+            android:textColor="#FFFFFF" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchCorrection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:checked="true"
+            android:text="Roast wrong turns (explicit)"
+            android:textColor="#FFFFFF" />
 
         <Button
-            android:id="@+id/btnTestGood"
-            android:layout_width="0dp"
+            android:id="@+id/btnNotifAccess"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Test: Nice!" />
-
-        <Space
-            android:layout_width="8dp"
-            android:layout_height="wrap_content" />
+            android:layout_marginTop="16dp"
+            android:text="1. Enable notification access (required)" />
 
         <Button
-            android:id="@+id/btnTestBad"
-            android:layout_width="0dp"
+            android:id="@+id/btnAccessibility"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Test: Oops" />
+            android:text="2. Enable accessibility = auto-start" />
+
+        <Button
+            android:id="@+id/btnBattery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="3. Allow background running (recommended)" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnTestGood"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Test: Amazing!" />
+
+            <Space
+                android:layout_width="8dp"
+                android:layout_height="wrap_content" />
+
+            <Button
+                android:id="@+id/btnTestBad"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Test roast" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnOpenMaps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Open Google Maps" />
     </LinearLayout>
-
-    <Button
-        android:id="@+id/btnOpenMaps"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Open Google Maps" />
-</LinearLayout>
+</ScrollView>

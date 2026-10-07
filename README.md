@@ -1,65 +1,72 @@
 # BetterMaps — Maps Complimentor 🎉
 
-> Your cheerful co-pilot for Google Maps. Hear **"Nice! Perfect! Good!"** on every correct turn — and a gentle **"Oops, wrong turn"** when you miss one.
+> Your co-pilot for Google Maps. Correct turn? **"Good! Perfect! Amazing!"** Wrong turn? **Roast mode.** Auto-starts when you open Google Maps.
 
-No API key. No entering your destination twice. Just navigate in Google Maps like normal — this app listens in the background and cheers you on.
+No API key. No entering your destination twice. Just navigate in Google Maps like normal — this app listens in the background and reacts.
+
+## 🔊 Voice lines
+
+**Correct turn (praise — random pick):**
+- Good! / Perfect! / Amazing! / Nice!
+- Great turn! / Smooth! / Well done! / Nailed it! / Excellent! / Brilliant!
+
+**Wrong turn (roast — random pick, ⚠️ explicit):**
+- Stupid bastard. / Shithead. / Dumbass.
+- You idiot. / Moron move. / Wrong turn, dumbass.
+
+**Arrival:** *You made it! Great driving!*
+
+Don't want the roasts? Turn off **"Roast wrong turns"** in the app — praise keeps playing. All lines are editable in `FeedbackSpeaker.kt` (`PRAISE` / `ROAST` arrays).
 
 ## How it works
 
-1. **Notification listener** (`NavNotificationListener.kt`) reads Google Maps turn-by-turn notifications (`com.google.android.apps.maps`): *"Turn left onto Main St"*, *"Rerouting…"*, *"You have arrived"*.
+1. **Notification listener** (`NavNotificationListener.kt`) reads Google Maps turn-by-turn notifications: *"Turn left onto Main St"*, *"Rerouting…"*, *"You have arrived"*.
 2. **Turn state machine** (`TurnDetector.kt`) tracks maneuvers:
-   - New maneuver arrives with no reroute in between → previous turn was **correct** → praise 🎉
-   - `Rerouting / Make a U-turn / Wrong way` appears → **wrong turn** → gentle callout 😅
-   - Distance countdowns (*"in 500 m"* → *"in 200 m"* → *"now"*) are de-duplicated so it doesn't spam.
-   - Straight highway cruising (`Continue straight / Head north`) is intentionally *not* praised — only real turns.
-3. **Accessibility fallback** (`MapsAccessibilityService.kt`) reads the on-screen nav card for devices where notification text is truncated.
-4. **Audio feedback** (`FeedbackSpeaker.kt`) speaks via on-device TTS — no audio files needed, works offline:
-   - Correct: *Nice! / Perfect! / Good! / Great turn! / Smooth! / Well done! / Nailed it!* (random)
-   - Wrong: *Oops, wrong turn. / Missed it, rerouting. / Not that way.*
-   - Arrival: *You made it! Great driving!*
+   - New maneuver with no reroute in between → previous turn was **correct** → praise 🎉
+   - `Rerouting / Make a U-turn / Wrong way` → **wrong turn** → roast 😅
+   - Distance countdowns (*"in 500 m"* → *"in 200 m"*) are de-duplicated; highway cruising (`Continue straight`) is never praised.
+3. **Auto-start** (`MapsAccessibilityService.kt` + `AutoStartReceiver.kt`): opening Google Maps warms the voice engine and resets trip state. Both listeners are system-managed, so they restart on reboot with no foreground service and near-zero RAM. (Android 10+ blocks apps from popping open over navigation, so BetterMaps runs silently instead of interrupting your drive.)
+4. **Audio** (`FeedbackSpeaker.kt`): single shared on-device TTS engine, no audio files.
 
-## Setup (2 minutes)
+## Setup (2 minutes, one time only)
 
-1. Install the app (`Maps Complimentor`) and open it.
-2. Tap **1. Enable notification access** → turn on *Maps Complimentor*.
-3. Tap **2. Enable accessibility** → turn on *Maps Complimentor* (fallback, recommended).
-4. Tap **Test: Nice!** / **Test: Oops** to check volume.
-5. Open Google Maps and start navigation. That's it.
+1. Install and open **BetterMaps**.
+2. Tap **1. Enable notification access** → turn on *BetterMaps*.
+3. Tap **2. Enable accessibility = auto-start** → turn on *BetterMaps*.
+4. Tap **3. Allow background running** (battery exemption, recommended).
+5. **Test: Amazing!** / **Test roast** to check volume.
+6. After that, **just open Google Maps and navigate** — you never need to open this app again.
 
-## Project structure
+## Logo
 
-```
-settings.gradle / build.gradle          Gradle setup (AGP 8.5.2, Kotlin 1.9.24, SDK 34)
-app/src/main/AndroidManifest.xml        Permissions + 2 background services
-app/src/main/java/com/mapscomplimentor/
-  MainActivity.kt                       Setup UI + permission checks + test buttons
-  NavNotificationListener.kt            Primary: parses Maps notifications
-  MapsAccessibilityService.kt           Fallback: parses on-screen nav card
-  TurnDetector.kt                       Pure-Kotlin turn right/wrong logic (testable)
-  TurnEngine.kt                         De-dup + anti-spam + wiring to speaker
-  FeedbackSpeaker.kt                    TTS "Nice! Perfect! Good!" / "Oops"
-app/src/main/res/                       Layout, strings, accessibility config
-```
+The BetterMaps logo (black pin + colors) is used as the launcher icon (`mipmap-anydpi-v26/ic_launcher`), in-app header, splash screen, and notification silhouette — all as tiny vectors to save RAM.
+To use your exact PNG instead: save it as `app/src/main/res/drawable-nodpi/logo.png`, then swap `@drawable/ic_logo_foreground` → `@drawable/logo` in the manifest + layout + themes.
+
+## Low-memory design
+
+- No foreground service, no location polling, no network calls.
+- Static keyword sets + precompiled regex (no per-event allocations).
+- Accessibility tree walk capped (depth 8, 40 nodes, throttled 1.5 s).
+- Single lazy TTS engine on app context, stopped on `onTrimMemory`.
+- Release builds shrink + minify; AppCompat only (no Material lib).
+- `largeHeap="false"`.
 
 ## Build
 
-Open in **Android Studio Ladybug+** → Sync Gradle → Run on a physical device (notification access doesn't work well on emulators).
+Android Studio Ladybug+ → Sync → Run on a physical device.
 
 ```bash
 ./gradlew assembleDebug
 ```
 
-Requires: Android SDK 34, minSdk 26 (Android 8.0+).
+Requires Android SDK 34, minSdk 26.
 
 ## Privacy
 
 - Only reads **Google Maps navigation text** (`com.google.android.apps.maps`).
 - Never collects keystrokes, passwords, contacts, or location history.
-- All processing is on-device. No network calls, no analytics.
+- All processing on-device.
 
 ## Customize
 
-Edit `FeedbackSpeaker.kt` → `praiseLines` / `wrongLines` to add your own phrases, or swap TTS for `MediaPlayer` + MP3s in `res/raw/`.
-
----
-Built for safer, happier driving. ⭐ Star it if it made you smile on a correct turn.
+Edit `FeedbackSpeaker.kt` → `PRAISE` / `ROAST` arrays. Keep it road-friendly. 😄
