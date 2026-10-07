@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Maps Complimentor</string>
+    <string name="accessibility_description">Reads Google Maps navigation instructions on-screen so correct turns can be praised and wrong turns called out. No keystrokes or passwords are ever collected.</string>
+</resources>
